@@ -8,7 +8,7 @@ import java.util.Scanner;
 public class PhaseLib {
     private static Scanner scan = new Scanner(System.in);
     
-    // returns true after three generations of the same candidate
+    // returns true after N generations of the same best-fit candidate
     public static Decider generationNum = new Decider() {
         @Override
         public boolean decide(Genome[] habitat) {
@@ -26,6 +26,32 @@ public class PhaseLib {
                 return true;
             
             return false;
+        }
+    };
+    
+    // returns true after the convergence of a genome
+    public static Decider convergeGenome = new Decider() {
+        @Override
+        public boolean decide(Genome[] habitat) {
+            for (int index = 0; index < populationSize - 1; ++index) {
+                if (!habitat[index].equals(habitat[index + 1]))
+                    return false;
+            }
+            
+            return true;
+        }
+    };
+    
+    // returns true after the convergence of a best-fit value
+    public static Decider convergeValue = new Decider() {
+        @Override
+        public boolean decide(Genome[] habitat) {
+            for (int index = 0; index < populationSize - 1; ++index) {
+                if (habitat[index].getValue() != habitat[index + 1].getValue())
+                    return false;
+            }
+            
+            return true;
         }
     };
     
@@ -60,12 +86,14 @@ public class PhaseLib {
     
     // modifies a genome according to the probability passed to the function
     public static void mutate(Genome offspring, float probability) {
-        float result = (float)(Math.random());
-        
-        // if the probability threshold is high enough
-        if (probability > result) {
-            // flip a random bit in the genome
-            offspring.genome.flip((int)(Math.random() * Genome.population.length));
+        for (int index = 0; index < Genome.population.length; ++index) {
+            float result = (float)(Math.random());
+            
+            // if the probability threshold is high enough
+            if (probability > result) {
+                // flip a bit in the genome
+                offspring.genome.flip(index);
+            }
         }
     }
     
@@ -116,7 +144,8 @@ public class PhaseLib {
     
     // generate a genome after several generations of "evolution"
     public static Genome evolve(List<Node> nodes, int capacity, int populationSize,
-                                int numOffspring, float radioactivity, Decider optimalFound) {
+                                int numOffspring, float radioactivity, boolean social,
+                                Decider optimalFound) {
         // define population and capacity
         int nodeNum = nodes.size();
         Genome.population = nodes.toArray(new Node[nodeNum]);
@@ -129,27 +158,39 @@ public class PhaseLib {
         for (int index = 0; index < habitat.length; ++index)
             habitat[index] = new Genome(nodeNum);
         
+        // configure the decider
+        optimalFound.populationSize = populationSize;
+        
         // rank the fitness of the genomes
         Arrays.sort(habitat, Collections.reverseOrder());
         
         // while the most fit genome is inadequate, hunt for better genomes
         while (!optimalFound.decide(habitat)) {
             // create offspring
-            int parentIndex = 0;                 // parents are stored from 0 to (populationSize - 1)
+            int motherIndex = 0;                 // mothers are stored from 0 to (populationSize - 1), evens
+            int fatherIndex = 0;                 // fathers are stored from 0 to (populationSize - 1), odds or random
             int offspringIndex = populationSize; // offspring are stored from populationSize to (habitat.length - 1)
+            Genome[] offspring;
             
-            while (parentIndex + 1 < populationSize) {
+            
+            // if "social" reproduce with many partners
+            while (motherIndex + 1 < populationSize) {
+                if (social)
+                    fatherIndex = (int)(Math.random() * populationSize);
+                else
+                    fatherIndex = motherIndex + 1;
+                
                 // generate offspring for two parents
-                Genome[] offspring = reproduce(habitat[parentIndex], 
-                                               habitat[parentIndex + 1], 
-                                               numOffspring);
+                offspring = reproduce(habitat[motherIndex], 
+                                      habitat[fatherIndex], 
+                                      numOffspring);
                 
                 // place offspring in habitat
                 for (Genome child : offspring)
                     habitat[offspringIndex++] = child;
                 
                 // increment to next two parents
-                parentIndex += 2;
+                motherIndex += 2;
             }
             
             // randomly mutate some new genomes
