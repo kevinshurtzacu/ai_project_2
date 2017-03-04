@@ -1,18 +1,23 @@
 import java.util.BitSet;
 import java.util.EnumSet;
+import java.util.Scanner;
+import java.io.InputStream;
 
 // object to represent each gene configuration
-public class Genome implements Comparable {
-    public static Node[] population;
-    public static int capacity;
+abstract public class Genome implements Comparable {
+    // data
+    public static Gene[] genes;
     public BitSet genome;
     
+    // input
+    protected static Scanner scan;
+    
     // create a random genome
-    public Genome() {
+    protected Genome() {
         genome = new BitSet();
         
         // randomly mix up genome
-        for (int index = 0; index < population.length; ++index) {
+        for (int index = 0; index < genes.length; ++index) {
             // for every gene, 50% chance of flipping
             if ((int)(Math.random() * 2) == 0)
                 genome.flip(index);
@@ -20,11 +25,11 @@ public class Genome implements Comparable {
     }
     
     // create a random genome of size 'length'
-    public Genome(int length) {
+    protected Genome(int length) {
         genome = new BitSet(length);
         
         // randomly mix up genome
-        for (int index = 0; index < population.length; ++index) {
+        for (int index = 0; index < genes.length; ++index) {
             // for every gene, 50% chance of flipping
             if ((int)(Math.random() * 2) == 0) {
                 genome.flip(index);
@@ -33,27 +38,27 @@ public class Genome implements Comparable {
     }
     
     // clone a genome
-    public Genome(Genome src) {
+    protected Genome(Genome src) {
         genome = (BitSet)src.genome.clone();
     }
     
     // create a genome from a mother and a father
-    public Genome(Genome mother, Genome father) {
+    protected Genome(Genome mother, Genome father) {
         // determine point at which to join mother and father
-        int split = (int)(Math.random() * population.length);
+        int split = (int)(Math.random() * genes.length);
         
         // clone the mother
         genome = (BitSet)mother.genome.clone();
         
         // join mother and father
-        genome.set(split, population.length);
+        genome.set(split, genes.length);
         genome.and(father.genome);
     }
     
     // create a genome from a mother and a father with flags
-    public Genome(Genome mother, Genome father, EnumSet<Property> properties) {
+    protected Genome(Genome mother, Genome father, EnumSet<Property> properties) {
         // determine point at which to join mother and father
-        int split = (int)(Math.random() * population.length);
+        int split = (int)(Math.random() * genes.length);
         
         // clone the mother
         genome = (BitSet)mother.genome.clone();
@@ -64,23 +69,23 @@ public class Genome implements Comparable {
             genome.and(father.genome);
         }
         else {
-            genome.set(split, population.length);
+            genome.set(split, genes.length);
             genome.and(father.genome);
         }
     }
     
     // create a genome from a mother and a father with a designated split point
-    public Genome(Genome mother, Genome father, int split) {
+    protected Genome(Genome mother, Genome father, int split) {
         // clone the mother
         genome = (BitSet)mother.genome.clone();
         
         // join mother and father
-        genome.set(split, population.length);
+        genome.set(split, genes.length);
         genome.and(father.genome);
     }
     
     // create a genome from a mother and a father with a designated split point and flags
-    public Genome(Genome mother, Genome father, int split, EnumSet<Property> properties) {
+    protected Genome(Genome mother, Genome father, int split, EnumSet<Property> properties) {
         // clone the mother
         genome = (BitSet)mother.genome.clone();
         
@@ -90,7 +95,7 @@ public class Genome implements Comparable {
             genome.and(father.genome);
         }
         else {
-            genome.set(split, population.length);
+            genome.set(split, genes.length);
             genome.and(father.genome);
         }
     }
@@ -131,23 +136,11 @@ public class Genome implements Comparable {
         return genome.hashCode();
     }
     
-    // return total value of genome
-    public int getValue() {
-        int value = 0;
-        int cost = 0;
-        
-        // total the value of the genome
-        for (int bitIndex = genome.nextSetBit(0); 
-                bitIndex != -1; 
-                bitIndex = genome.nextSetBit(bitIndex + 1)) {
-            value += population[bitIndex].value;
-            cost  += population[bitIndex].cost;
-        }
-        
-        // if the cost exceeds capacity the genome loses its value
-        if (cost > capacity)
-            value = (capacity - cost);
-        
-        return value;
+    // set the data's input source
+    public static void setInput(InputStream in) {
+        scan = new Scanner(in);
     }
+    
+    // return total value of genome
+    abstract public int getValue();
 }

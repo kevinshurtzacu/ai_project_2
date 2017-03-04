@@ -1,14 +1,15 @@
 // abstract class for implementing decision logic
 abstract public class Decider {
     // keep track of candidate history
-    public static int same = 1;
-    public static Genome lastGeneration = null;
+    public int same = 1;
+    public Genome lastGeneration = null;
     
     // keep track of population information
-    public static int populationSize = 0;
+    public int populationSize = 0;
     
     // configuration information
-    public int generationCap = 0;
+    public int generationCap = 100;
+    public String name = "";
     
     // given a habitat, select whether an answer should be chosen
     abstract public boolean decide(Genome[] habitat);
