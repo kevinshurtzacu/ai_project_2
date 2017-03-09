@@ -12,7 +12,7 @@ public class PhaseOne {
         int numOffspring = 7;
         float radioactivity = .005f;
         boolean social = false;
-        boolean oneChild = true;
+        boolean oneChild = false;
         int numConverge = 3;
         float punctuation = .20f;
         int generationCap = 100;
