@@ -38,6 +38,12 @@ public class PhaseLib {
         out.println(" -o, --one-child                   create only one child after each generation, mother is\n" +
                     "                                   always the most fit, father is determined by 'social' flag\n");
         
+        out.println(" -v, --converge-num [integer]      after a potentally optimal genome is found, repeat search\n" +
+                    "                                   until the same result is unchallenged 'num-converge' times\n");
+        
+        out.println(" -u, --punctuation [float]         the mutation rate (or \"radioactivity\") used when\n" +
+                    "                                   mutating the seed genomes between \"runs\"\n");
+        
         out.println(" -g, --generation-cap [integer]    set the number generations before top-ranking genome\n" +
                     "                                   is selected, works only when 'gen-num' is used\n");
         
@@ -52,10 +58,11 @@ public class PhaseLib {
     
     // print defaults
     private static void printDefaults(PrintStream out, int populationSize, int numOffspring, 
-                                      float radioactivity, int generationCap) {
+                                      float radioactivity, int generationCap, int numConverge,
+                                      float punctuation) {
         out.println("\nDefaults:");
-        out.format(" java PhaseOne -p %d -o %d -r %.3f -g %d -d 'conv-value'\n", 
-                   populationSize, numOffspring, radioactivity, generationCap);
+        out.format(" java PhaseOne -p %d -o %d -r %.3f -g %d -d 'conv-value' -v %d -u %f\n", 
+                   populationSize, numOffspring, radioactivity, generationCap, numConverge, punctuation);
     }
     
     // print examples
@@ -82,10 +89,10 @@ public class PhaseLib {
     }
     
     // print help (with defaults)
-    public static void printHelp(PrintStream out, int populationSize, int numOffspring, 
-                                 float radioactivity, int generationCap) {
+    public static void printHelp(PrintStream out, int populationSize, int numOffspring, float radioactivity, 
+                                 int generationCap, int numConverge, float punctuation) {
         printUsage(out);
-        printDefaults(out, generationCap, populationSize, radioactivity, numOffspring);
+        printDefaults(out, generationCap, populationSize, radioactivity, numOffspring, numConverge, punctuation);
         printFlags(out);
         printExamples(out);        
     }
@@ -145,7 +152,60 @@ public class PhaseLib {
             return true;
         }
     };
-       
+    
+    public static Genome mostFit(GenomeBuilder builder, int populationSize, int numOffspring, 
+                                 float radioactivity, boolean social, boolean oneChild, 
+                                 Decider optimalFound, int numConverge, float punctuation) {
+        // controls
+        int fittestValue = 0; // highest value found thus far
+        int nextGenValue = 0; // best value of next generation
+        int consistent = 0;   // number of generations matching the highest value;
+        
+        // create the original organism
+        Genome[] fittest = evolve(builder, populationSize, numOffspring, radioactivity, 
+                                 social, oneChild, optimalFound);
+        Genome[] nextGen = new Genome[fittest.length];
+        
+        // update controls
+        consistent += 1;
+        
+        while (consistent < numConverge) {
+            // copy and mutate fittest genomes
+            for (int index = 0; index < fittest.length; ++index) {
+                // copy the organism
+                nextGen[index] = builder.build(fittest[index]);
+                
+                // excepting the most fit organism, mutate
+                if (index > 0)
+                    mutate(nextGen[index], punctuation);
+            }
+            
+            // create a new generation
+            nextGen = evolve(builder, populationSize, numOffspring, radioactivity, 
+                             social, oneChild, optimalFound, nextGen);
+            
+            // update controls
+            fittestValue = fittest[0].getValue();
+            nextGenValue = nextGen[0].getValue();
+            
+            if (nextGenValue == fittestValue) {
+                // update 'consistent' counter
+                consistent += 1;
+            }
+            else if (nextGenValue > fittestValue) {
+                // update fittest generation
+                fittest = nextGen;
+                
+                // reset the 'consistent' counter
+                consistent = 1;
+            }
+        }
+        
+        // return the fittest organism
+        return fittest[0];
+    }
+    
+    
     // modifies a genome according to the probability passed to the function
     public static void mutate(Genome offspring, float probability) {
         for (int index = 0; index < Genome.genes.length; ++index) {
@@ -165,7 +225,7 @@ public class PhaseLib {
      * The splicing point is selected randomly.  For even-numbered offspring,
      * the resulting genome is the compliment of their preceding siblings.
      */
-    public static Genome[] reproduce(GenomeBuilder builder, Genome mother, Genome father, int numOffspring) {
+    private static Genome[] reproduce(GenomeBuilder builder, Genome mother, Genome father, int numOffspring) {
         // create new genomes
         Genome[] offspring = new Genome[numOffspring];
         
@@ -200,7 +260,7 @@ public class PhaseLib {
      * offspring rise to the top.  Then, those genomes outside of the survival
      * range are replaced ("killed") when the next generation appears.
      */
-    public static Genome[] makeHabitat(int populationSize, int numOffspring) {
+    private static Genome[] makeHabitat(int populationSize, int numOffspring) {
         return new Genome[populationSize + ((populationSize / 2) * numOffspring)];
     }
     
@@ -212,14 +272,14 @@ public class PhaseLib {
      *
      * The least fit species is killed at the end of each generation.
      */
-    public static Genome[] makeHabitat(int populationSize) {
+    private static Genome[] makeHabitat(int populationSize) {
         return new Genome[populationSize + 1];
     }
     
-    // generate a genome after several generations of "evolution"
-    public static Genome evolve(GenomeBuilder builder, int populationSize,
-                                int numOffspring, float radioactivity, boolean social,
-                                boolean oneChild, Decider optimalFound) {
+    // generate a genome after several generations of "evolution", use builder
+    public static Genome[] evolve(GenomeBuilder builder, int populationSize,
+                                  int numOffspring, float radioactivity, boolean social,
+                                  boolean oneChild, Decider optimalFound) {
         // create a fresh habitat
         Genome[] habitat = oneChild ? makeHabitat(populationSize) : makeHabitat(populationSize, numOffspring);
         
@@ -289,6 +349,78 @@ public class PhaseLib {
         }
         
         // return the fittest genome
-        return habitat[0];
+        return habitat;
+    }
+    
+    // generate a genome after several generations of "evolution", take seed
+    public static Genome[] evolve(GenomeBuilder builder, int populationSize,
+                                  int numOffspring, float radioactivity, boolean social,
+                                  boolean oneChild, Decider optimalFound, Genome[] seed) {
+        // seed the habitat
+        Genome[] habitat = seed;
+        
+        // configure the decider
+        optimalFound.populationSize = populationSize;
+        
+        // rank the fitness of the genomes
+        Arrays.sort(habitat, Collections.reverseOrder());
+        
+        // while the most fit genome is inadequate, hunt for better genomes
+        while (!optimalFound.decide(habitat)) {
+            // create offspring
+            int motherIndex = 0;                 // mothers are stored from 0 to (populationSize - 1), evens
+            int fatherIndex = 0;                 // fathers are stored from 0 to (populationSize - 1), odds or random
+            int offspringIndex = populationSize; // offspring are stored from populationSize to (habitat.length - 1)
+            Genome[] offspring;
+            
+            // if only one parent
+            if (populationSize == 1) {
+                habitat[offspringIndex] = builder.build(habitat[motherIndex]);
+            }
+            else if (oneChild) {
+                // if "social" reproduce with any partner
+                if (social)
+                    fatherIndex = (int)(Math.random() * populationSize);
+                else
+                    fatherIndex = motherIndex + 1;
+                
+                // create only one child
+                habitat[offspringIndex] = builder.build(habitat[motherIndex], 
+                                                        habitat[fatherIndex]);
+            }
+            else {
+                // distribute children
+                while (motherIndex + 1 < populationSize) {
+                    // if "social" reproduce with any partner
+                    if (social)
+                        fatherIndex = (int)(Math.random() * populationSize);
+                    else
+                        fatherIndex = motherIndex + 1;
+                    
+                    // generate offspring for two parents
+                    offspring = reproduce(builder,
+                                          habitat[motherIndex], 
+                                          habitat[fatherIndex], 
+                                          numOffspring);
+                    
+                    // place offspring in habitat
+                    for (Genome child : offspring)
+                        habitat[offspringIndex++] = child;
+                    
+                    // increment to next two parents
+                    motherIndex += 2;
+                }
+            }
+            
+            // randomly mutate some new genomes
+            for (int index = populationSize; index < habitat.length; ++index)
+                mutate(habitat[index], radioactivity);
+            
+            // determine the most fit
+            Arrays.sort(habitat, Collections.reverseOrder());
+        }
+        
+        // return the fittest genome
+        return habitat;
     }
 }
