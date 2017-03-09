@@ -8,11 +8,11 @@ import java.io.IOException;
 public class PhaseOne {
     public static void main(String... args) {
         // default variable options
-        int populationSize = 32;
+        int populationSize = 100;
         int numOffspring = 7;
         float radioactivity = .005f;
         boolean social = false;
-        boolean oneChild = false;
+        boolean oneChild = true;
         int numConverge = 3;
         float punctuation = .20f;
         int generationCap = 100;
