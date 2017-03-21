@@ -1,12 +1,12 @@
 import java.util.EnumSet;
 
 // interface specifying the construction of genomes
-abstract public class GenomeBuilder {
-    abstract public Genome build();
-    abstract public Genome build(int length);
-    abstract public Genome build(Genome src);
-    abstract public Genome build(Genome mother, Genome father);
-    abstract public Genome build(Genome mother, Genome father, EnumSet<Property> properties);
-    abstract public Genome build(Genome mother, Genome father, int split);
-    abstract public Genome build(Genome mother, Genome father, int split, EnumSet<Property> properties);
+public interface GenomeBuilder {
+    Genome build();
+    Genome build(int length);
+    Genome build(Genome src);
+    Genome build(Genome mother, Genome father);
+    Genome build(Genome mother, Genome father, EnumSet<Property> properties);
+    Genome build(Genome mother, Genome father, int split);
+    Genome build(Genome mother, Genome father, int split, EnumSet<Property> properties);
 }
