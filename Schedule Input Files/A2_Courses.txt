@@ -1,0 +1,30 @@
+Section List Begin
+Physics 101,0900,0950,MWF,Fall,2017
+Physics 101,1000,1050,MWF,Fall,2017
+Chemistry 101,0930,1050,TR,Fall,2017
+Programming I,0800,0850,MWF,Fall,2017
+Programming I,1300,1350,MWF,Fall,2017
+
+Programming II,1000,1050,MWF,Spring,2018
+Chemistry 101,0930,1050,TR,Spring,2017
+Programming II,1200,1320,TR,Spring,2018
+Chemistry 101,1200,1320,TR,Spring,2018
+
+Object Oriented Programming,0900,0950,MWF,Fall,2018
+Physics 101,0900,0950,MWF,Fall,2018
+Chemistry 101,0900,0950,MWF,Fall,2018
+Programming I,1300,1350,MWF,Fall,2018
+Programming II,1000,1050,MWF,Fall,2018
+
+Core 211,0900,0950,MWF,Spring,2019
+Core 211,0930,1050,TR,Spring,2019
+Core 211,1300,1420,TR,Spring,2019
+Communication 211,0800,0920,TR,Spring,2019
+Communication 211,1300,1420,TR,Spring,2019
+
+Core 211,0800,0920,TR,Fall,2019
+Physics 101,0930,1050,TR,Fall,2019
+Chemistry 101,1000,1050,MWF,Fall,2019
+Programming II,1200,1320,TR,Fall,2019
+
+Section List End
