@@ -58,7 +58,7 @@ public class PhaseLib {
         out.println(" -n, --num-trials [integer]        used in conjunction with the time switch, specifies number\n" +
                     "                                   of trials to use when creating average runtime\n");
 
-        out.println(" -b, --bare                        display only the bare value produced by the algorithm");
+        out.println(" -b, --bare                        display only the bare value produced by the algorithm\n");
 
         out.println(" -h, --help                        display help information");
     }
