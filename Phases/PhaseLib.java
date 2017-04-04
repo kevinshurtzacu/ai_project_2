@@ -68,7 +68,7 @@ public class PhaseLib {
                                       float radioactivity, int generationCap, int numConverge,
                                       float punctuation) {
         out.println("\nDefaults:");
-        out.format(" java PhaseOne -p %d -o %d -r %.3f -g %d -d 'conv-value' -v %d -u %f -n 1\n",
+        out.format(" java PhaseOne -p %d -c %d -r %.3f -g %d -d 'conv-value' -v %d -u %f -n 1\n",
                    populationSize, numOffspring, radioactivity, generationCap, numConverge, punctuation);
     }
 
