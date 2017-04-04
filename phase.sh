@@ -10,7 +10,7 @@ if [[ "$selection" == "one" ]]; then
         # Format as CSV
         if [[ "$csv" == "-c" || "$csv" == "--csv" ]]; then
             # Print CSV headers
-            echo "name,lines,real,user,sys"
+            echo "name,lines,nano"
 
             find -path "*Input Files/*" -not -path "./Schedule Input Files/*" -exec bash -c '
                 # Run PhaseOne against each file
@@ -19,13 +19,11 @@ if [[ "$selection" == "one" ]]; then
                 let file_length=$(cat "$1" | sed "/^\s*$/d" | wc -l)-1
 
                 cd Phases
-                \time -f "$file_name,$file_length,%E,%U,%S" bash -c "
-                    echo \"$file_content\" | java PhaseOne -o > /dev/null
-                "
+                let avg_time=$(echo "$file_content" | java PhaseOne -p 16 -c 7 -t -n 100)
                 cd ..
 
-                # Move to the next argument
-                shift
+                # Print results
+                echo "$file_name,$file_length,$avg_time"
             ' bash {} \;
 
         # Display default time output
@@ -37,12 +35,10 @@ if [[ "$selection" == "one" ]]; then
 
                 # Run PhaseOne against each file
                 file_content=$(cat "$1")
-                cd Phases
-                \time echo "$file_content" | java PhaseOne -o > /dev/null
-                cd ..
 
-                # Move to the next argument
-                shift
+                cd Phases
+                time echo "$file_content" | java PhaseOne -p 16 -c 7 > /dev/null
+                cd ..
             ' bash {} \;
         fi
 
@@ -55,12 +51,10 @@ if [[ "$selection" == "one" ]]; then
 
             # Run PhaseOne against each file
             file_content=$(cat "$1")
-            cd Phases
-            echo "$file_content" | java PhaseOne -o
-            cd ..
 
-            # Move to the next argument
-            shift
+            cd Phases
+            echo "$file_content" | java PhaseOne -p 16 -c 7
+            cd ..
         ' bash {} \;
     fi
 
@@ -71,7 +65,7 @@ elif [[ "$selection" == "two" ]]; then
         # Format as CSV
         if [[ "$csv" == "-c" || "$csv" == "--csv" ]]; then
             # Print CSV headers
-            echo "name,lines,real,user,sys"
+            echo "name,lines,nano"
 
             find -path "./Schedule Input Files/*" -not -name "*Students*" -exec bash -c '
                 # Run PhaseOne against each file
@@ -80,13 +74,10 @@ elif [[ "$selection" == "two" ]]; then
                 let file_length=$(cat "$1" | sed "/^\s*$/d" | wc -l)-1
 
                 cd Phases
-                \time -f "$file_name,$file_length,%E,%U,%S" bash -c "
-                    echo \"$file_content\" | java PhaseTwo -o > /dev/null
-                "
+                let avg_time=$(echo "$file_content" | java PhaseTwo -p 16 -c 7 -t -n 100)
                 cd ..
 
-                # Move to the next argument
-                shift
+                echo "$file_name,$file_length,$avg_time"
             ' bash {} \;
 
         # Display default time output
@@ -98,12 +89,10 @@ elif [[ "$selection" == "two" ]]; then
 
                 # Run PhaseOne against each file
                 file_content=$(cat "$1")
-                cd Phases
-                \time echo "$file_content" | java PhaseTwo -o > /dev/null
-                cd ..
 
-                # Move to the next argument
-                shift
+                cd Phases
+                time echo "$file_content" | java PhaseTwo -p 16 -c 7 > /dev/null
+                cd ..
             ' bash {} \;
         fi
 
@@ -115,13 +104,11 @@ elif [[ "$selection" == "two" ]]; then
             echo "Processing File: $1"
 
             # Run PhaseTwo against each file
-            file=$(cat "$1")
-            cd Phases
-            echo "$file" | java PhaseTwo -o -p 16 -r .05 -v 7
-            cd ..
+            file_content=$(cat "$1")
 
-            # Move to the next argument
-            shift
+            cd Phases
+            echo "$file_content" | java PhaseTwo -p 16 -c 7
+            cd ..
         ' bash {} \;
     fi
 
@@ -133,17 +120,31 @@ elif [[ "$selection" == "three" ]]; then
     let file_length=$(cat "$2" | sed "/^\s*$/d" | wc -l)-1
 
     # Print CSV headers
-    echo "name,lines,real,user,sys,radioactivity"
+    echo "nano,radioactivity"
 
-    # test a range of radioactivity from 0 to 1
-    for radioactivity in $(seq 0 .01 .05); do
+    # Test a range of radioactivity from 0 to .5
+    let repeats=0
+    found_one=false
+
+    for radioactivity in $(seq 0 .01 .5); do
+        # If no more tests are realistic, break the loop
+        if [[ $found_one = true && repeats -ge 3 ]]; then
+            break
+        fi
+
         cd Phases
-        timeout 30 \time -f "$file_name,$file_length,%E,%U,%S,$radioactivity" bash -c "
-            echo \"$file_content\" | java PhaseOne -o -r $radioactivity #> /dev/null
-        "
+        avg_time=$(timeout 30 bash -c "echo \"$file_content\" | java PhaseOne -p 16 -c 7 -r $radioactivity -t -n 5")
+
+        # Only print if there is data
+        if [[ -n "$avg_time" ]]; then
+            found_one=true
+            echo "$avg_time,$radioactivity"
+
+        # Otherwise, acknowlege that the last test was a dud
+        else
+            let repeats=$repeats+1
+        fi
+
         cd ..
     done
-
-    # Move to the next argument
-    shift
 fi
