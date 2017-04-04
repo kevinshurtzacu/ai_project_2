@@ -6,7 +6,7 @@ Programming I,0800,0850,MWF,Fall,2017
 Programming I,1300,1350,MWF,Fall,2017
 
 Programming II,1000,1050,MWF,Spring,2018
-Chemistry 101,0930,1050,TR,Spring,2017
+Chemistry 101,0930,1050,TR,Spring,2018
 Programming II,1200,1320,TR,Spring,2018
 Chemistry 101,1200,1320,TR,Spring,2018
 

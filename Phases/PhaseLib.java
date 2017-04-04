@@ -55,7 +55,7 @@ public class PhaseLib {
 
         out.println(" -t, --time                        time the system for a given input in nanoseconds\n");
 
-        out.println(" -n, --num-trials [integer]        used in conjunction with the time switch, specifies number" +
+        out.println(" -n, --num-trials [integer]        used in conjunction with the time switch, specifies number\n" +
                     "                                   of trials to use when creating average runtime\n");
 
         out.println(" -b, --bare                        display only the bare value produced by the algorithm");
