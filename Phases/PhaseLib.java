@@ -53,6 +53,13 @@ public class PhaseLib {
 
         out.println(" -f, --file-input [file name]      select an input file instead of using standard input\n");
 
+        out.println(" -t, --time                        time the system for a given input in nanoseconds\n");
+
+        out.println(" -n, --num-trials [integer]        used in conjunction with the time switch, specifies number" +
+                    "                                   of trials to use when creating average runtime\n");
+
+        out.println(" -b, --bare                        display only the bare value produced by the algorithm");
+
         out.println(" -h, --help                        display help information");
     }
 
@@ -61,7 +68,7 @@ public class PhaseLib {
                                       float radioactivity, int generationCap, int numConverge,
                                       float punctuation) {
         out.println("\nDefaults:");
-        out.format(" java PhaseOne -p %d -o %d -r %.3f -g %d -d 'conv-value' -v %d -u %f\n",
+        out.format(" java PhaseOne -p %d -o %d -r %.3f -g %d -d 'conv-value' -v %d -u %f -n 1\n",
                    populationSize, numOffspring, radioactivity, generationCap, numConverge, punctuation);
     }
 

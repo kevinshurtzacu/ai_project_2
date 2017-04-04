@@ -8,6 +8,34 @@ import java.io.InputStream;
 import java.io.IOException;
 
 public class PhaseTwo {
+    // display all relevant information about genome
+    public static void displayAll(Genome mostFit) {
+        // display genome information
+        System.out.println("Bit String: " + mostFit.genome);
+        System.out.println("\nRecommended courses for " + ScheduleGenome.getStudentName() + ":");
+        for (int bitIndex = mostFit.genome.nextSetBit(0);
+                bitIndex != -1;
+                bitIndex = mostFit.genome.nextSetBit(bitIndex + 1)) {
+            ScheduleGene gene = (ScheduleGene)Genome.genes[bitIndex];
+            System.out.format("%-40s", gene.name);
+            System.out.format("%4d - %4d %-8s", gene.startTime, gene.endTime, gene.days);
+            System.out.format("%-9s %4d\n", gene.season, gene.year);
+        }
+
+        // display value and capacity
+        System.out.println("\n\nTotal Value: " + mostFit.getValue());
+    }
+
+    // display only final result
+    public static void displayValue(Genome mostFit) {
+        System.out.print(mostFit.getValue());
+    }
+
+    // display only time
+    public static void displayTime(long avgTime) {
+        System.out.print(avgTime);
+    }
+
     public static void main(String... args) {
         // default variable options
         int populationSize = 100;
@@ -20,6 +48,9 @@ public class PhaseTwo {
         int generationCap = 100;
         InputStream input = System.in;
         Decider decider = PhaseLib.convergeValue;
+        boolean time = false;
+        int numTrials = 1;
+        boolean bare = false;
         boolean help = false;
 
         // process command line arguments
@@ -70,6 +101,15 @@ public class PhaseTwo {
                     decider = PhaseLib.generationNum;
             }
 
+            if (args[index].equals("--time") || args[index].equals("-t"))
+                time = true;
+
+            if (args[index].equals("--num-trials") || args[index].equals("-n"))
+                numTrials = Integer.parseInt(args[++index]);
+
+            if (args[index].equals("--bare") || args[index].equals("-b"))
+                bare = true;
+
             if (args[index].equals("--help") || args[index].equals("-h"))
                 help = true;
         }
@@ -102,24 +142,34 @@ public class PhaseTwo {
 
             // create genome
             PhaseLib.generationNum.generationCap = generationCap;
-            Genome mostFit = PhaseLib.mostFit(ScheduleGenome.builder, populationSize, numOffspring,
+            Genome mostFit = null;
+
+            // conduct number of specified trials
+            long startTime = 0;
+            long endTime = 0;
+            long total = 0;
+
+            for (int trial = 0; trial < numTrials; ++trial) {
+                // conduct trial
+                startTime = System.nanoTime();
+                mostFit = PhaseLib.mostFit(ScheduleGenome.builder, populationSize, numOffspring,
                                               radioactivity, social, oneChild, decider, numConverge,
                                               punctuation);
+                endTime = System.nanoTime();
 
-            // display genome information
-            System.out.println("Bit String: " + mostFit.genome);
-            System.out.println("\nRecommended courses for " + ScheduleGenome.getStudentName() + ":");
-            for (int bitIndex = mostFit.genome.nextSetBit(0);
-                    bitIndex != -1;
-                    bitIndex = mostFit.genome.nextSetBit(bitIndex + 1)) {
-                ScheduleGene gene = (ScheduleGene)Genome.genes[bitIndex];
-                System.out.format("%-40s", gene.name);
-                System.out.format("%4d - %4d %-8s", gene.startTime, gene.endTime, gene.days);
-                System.out.format("%-9s %4d\n", gene.season, gene.year);
+                // add to total
+                total += (endTime - startTime);
             }
 
-            // display value and capacity
-            System.out.println("\n\nTotal Value: " + mostFit.getValue());
+            long avgTime = Math.round((double)total / numTrials);
+
+            // display results
+            if (time)
+                displayTime(avgTime);
+            else if (bare)
+                displayValue(mostFit);
+            else
+                displayAll(mostFit);
         }
     }
 }
